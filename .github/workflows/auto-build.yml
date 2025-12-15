@@ -1,4 +1,4 @@
-name: Auto Build React App
+name: Auto Build React App (Teaching Safe)
 
 on:
   push:
@@ -15,17 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout source code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # 1️⃣ Checkout code
+      - uses: actions/checkout@v4
 
-      # 2️⃣ Setup stable Node.js (NO cache → no lockfile dependency)
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # 2️⃣ Setup Node (no cache, lockfile-safe)
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      # 3️⃣ Install dependencies safely (lockfile optional)
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
@@ -38,7 +36,7 @@ jobs:
       - name: Build app
         run: npm run build
 
-      # 5️⃣ Commit compiled dist folder
+      # 5️⃣ Commit dist
       - name: Commit dist
         run: |
           git config user.name "github-actions"
@@ -47,16 +45,10 @@ jobs:
           git diff --cached --quiet || git commit -m "Auto-build: update dist"
           git push
 
-      # 6️⃣ Create ZIP of dist folder
-      - name: Zip dist folder
-        run: |
-          cd dist
-          zip -r ../dist.zip .
-          cd ..
-
-      # 7️⃣ Upload ZIP as downloadable artifact
-      - name: Upload dist.zip
-        uses: actions/upload-artifact@v4
+      # 6️⃣ Deploy dist to gh-pages (auto-create branch)
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: dist-zip
-          path: dist.zip
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
