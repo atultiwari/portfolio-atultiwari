@@ -1,4 +1,4 @@
-name: Auto Build React App (Teaching Safe)
+name: Auto Build React App
 
 on:
   push:
@@ -19,14 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Stable Node.js version
+      # 2️⃣ Setup stable Node.js (NO cache → no lockfile dependency)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: "npm"
 
-      # 3️⃣ Install dependencies safely
+      # 3️⃣ Install dependencies safely (lockfile optional)
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
