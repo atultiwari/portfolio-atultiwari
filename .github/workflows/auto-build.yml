@@ -1,31 +1,63 @@
-name: Auto Build React App
+name: Auto Build React App (Teaching Safe)
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "dist/**"
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # 1️⃣ Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # 2️⃣ Stable Node.js version
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
 
+      # 3️⃣ Install dependencies safely
       - name: Install dependencies
-        run: npm install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
+      # 4️⃣ Build React app
       - name: Build app
         run: npm run build
 
+      # 5️⃣ Commit compiled dist folder
       - name: Commit dist
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add dist
-          git commit -m "Auto build dist" || echo "No changes"
+          git diff --cached --quiet || git commit -m "Auto-build: update dist"
           git push
+
+      # 6️⃣ Create ZIP of dist folder
+      - name: Zip dist folder
+        run: |
+          cd dist
+          zip -r ../dist.zip .
+          cd ..
+
+      # 7️⃣ Upload ZIP as downloadable artifact
+      - name: Upload dist.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-zip
+          path: dist.zip
