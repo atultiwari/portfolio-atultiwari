@@ -1,0 +1,54 @@
+name: Auto Build React App (Teaching Safe)
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "dist/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout code
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node (no cache, lockfile-safe)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      # 4️⃣ Build React app
+      - name: Build app
+        run: npm run build
+
+      # 5️⃣ Commit dist
+      - name: Commit dist
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add dist
+          git diff --cached --quiet || git commit -m "Auto-build: update dist"
+          git push
+
+      # 6️⃣ Deploy dist to gh-pages (auto-create branch)
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
